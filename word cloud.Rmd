@@ -1,0 +1,100 @@
+---
+title: "Health News Tweets"
+author: "Prem Kumar Kamasani"
+date: "October 28, 2018"
+output:
+  word_document: default
+  pdf_document: default
+---
+Data for this project is taken from https://archive.ics.uci.edu/ml/machine-learning-databases/00438/
+
+Data consists of tweets about health news in Newyork Times.
+
+```{r}
+library(tm)
+setwd("D:/Downloads")
+text<-readLines("Health-Tweets/nytimeshealth.txt")
+text[1:10]
+
+```
+Above Shown is the first 10 lines of the data. Inorder to proceed with the further analysis we need to clean the data.
+
+```{r}
+
+# Build Corpus
+
+corpus<- iconv(text)
+corpus<-Corpus(VectorSource(corpus))
+```
+Removing numbers from the data.
+```{r}
+# clean Text
+
+inspect(corpus[1:10])
+corpus<- tm_map(corpus, removeNumbers)
+inspect(corpus[1:10])
+
+```
+Removing URL's 
+```{r}
+removeUrlPat<-function(x) gsub("(ftp|http)(s?)://.*\\b", "", x)
+corpus<-tm_map(corpus, removeUrlPat)
+inspect(corpus[1:10])
+```
+Removing dates
+```{r}
+removeDates<-function(x) gsub('\\|.*\\|',"", x)
+corpus<-tm_map(corpus,removeDates)
+inspect(corpus[1:10])
+```
+Converting whole data to lower case.
+```{r}
+corpus<-tm_map(corpus, tolower)
+inspect(corpus[1:10])
+```
+remove punctuations
+```{r}
+corpus<-tm_map(corpus, removePunctuation)
+inspect(corpus[1:10])
+```
+Remove stopwords
+```{r}
+corpus<-tm_map(corpus, removeWords, stopwords("english"))
+inspect(corpus[1:10])
+```
+Remove unnecessary whitespaces 
+```{r}
+corpus<-tm_map(corpus, stripWhitespace)
+inspect(corpus[1:10])
+```
+After cleaning the data we need to count the word frequency
+```{r}
+# Term Document Matrix
+
+tdm<-TermDocumentMatrix(corpus, control = list(minWordLength=c(1,Inf)))
+tdm<-as.matrix(tdm)
+termFrequency<- rowSums(tdm)
+termFrequency[1:10]
+```
+Since there are many words, we keep only words with frequency >= 100
+```{r}
+termFrequency<-subset(termFrequency, termFrequency>=100)
+termFrequency[1:10]
+
+```
+
+```{r}
+#Bar Plot
+
+barplot(termFrequency,las=2, col=rainbow(40), ylab = 'Frequency of Words')
+
+```
+
+```{r}
+
+library(wordcloud)
+wordfreq<-sort(rowSums(tdm),decreasing = TRUE )
+#wordfreq<-subset(wordfreq, wordfreq>=50)
+wordcloud(words=names(wordfreq), freq = wordfreq, random.order = FALSE, max.words = 100, colors = rainbow(12))
+
+```
